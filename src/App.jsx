@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import Search from "./components/Search";
 import Spinner from "./components/Spinner";
+import MovieCard from "./components/MovieCard";
+import { useDebounce } from "react-use";
 
 const API_BASE_URL = "https://api.themoviedb.org/3";
 
@@ -15,25 +17,26 @@ const API_OPTIONS = {
 };
 
 const App = () => {
-  // Search bar state.
-  const [searchTerm, setSearchTerm] = useState("");
-
-  // Error handling fro debuging on broweser.
-  const [errorMessage, setErrorMessage] = useState("");
-
+  const [searchTerm, setSearchTerm] = useState(""); // Search bar state.
+  const [errorMessage, setErrorMessage] = useState(""); // Error handling fro debuging on broweser.
   const [movieList, setMovieList] = useState([]);
+  const [isLoading, setIsLoading] = useState(false); // Handling fetch loading time.
+  const [debounceSearchTerm, setDebounceSearchTerm] = useState(""); // Debounce search bar.
 
-  // Handling fetch loading time.
-  const [isLoading, setIsLoading] = useState(false);
+  // Debounce the search term to prevent making too many API requests.
+  // by waiting for the user to stop typing for 500ms.
+  useDebounce(() => setDebounceSearchTerm(searchTerm), 500, [searchTerm]);
 
   // Fetching movies data from TMDB's API.
-  const fetchMovies = async () => {
+  const fetchMovies = async (query = "") => {
     setIsLoading(true);
     setErrorMessage("");
 
     try {
       // API Endpoint.
-      const endpoint = `${API_BASE_URL}/discover/movie?sort_by=popularity.desc`;
+      const endpoint = query
+        ? `${API_BASE_URL}/search/movie?query=${encodeURIComponent(query)}`
+        : `${API_BASE_URL}/discover/movie?sort_by=popularity.desc`;
 
       // Fetching data from the Endpoint with the credentials.
       const response = await fetch(endpoint, API_OPTIONS);
@@ -60,9 +63,10 @@ const App = () => {
       setIsLoading(false);
     }
   };
+
   useEffect(() => {
-    fetchMovies();
-  }, []);
+    fetchMovies(debounceSearchTerm);
+  }, [debounceSearchTerm]);
 
   return (
     <main>
@@ -88,9 +92,7 @@ const App = () => {
           ) : (
             <ul>
               {movieList.map((movie) => (
-                <p key={movie.id} className="text-white">
-                  {movie.title}
-                </p>
+                <MovieCard key={movie.id} movie={movie} />
               ))}
             </ul>
           )}
