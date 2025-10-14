@@ -3,6 +3,7 @@
     "checkJs": true,
     "jsx": "react-jsx",
     "module": "esnext",
+    "lib": ["es2021", "dom"],
     "moduleResolution": "bundler",
     "target": "esnext",
     "baseUrl": ".",
